@@ -4,6 +4,8 @@ defmodule CriticalResource do
   end
 
   def loop(data) do
+    MyLogger.log(:resource, "data", "", data)
+
     receive do
       {:read, pid, name} ->
         MyLogger.log(:resource, name, :reading)
@@ -11,6 +13,8 @@ defmodule CriticalResource do
         loop(data)
       {:write, name, data} ->
         MyLogger.log(:resource, name, :writing, data)
+        loop(data)
+      _ ->
         loop(data)
     end
   end
@@ -61,7 +65,7 @@ defmodule Worker do
 end
 
 defmodule MyLogger do
-  def log(actor, id, action, data \\ "_") do
+  def log(actor, id, action, data \\ "") do
     entry = "#{actor}\t#{id}\t#{action}\t#{data}" 
     IO.puts entry
   end
@@ -71,7 +75,6 @@ end
 # Have a resource that can be read by everyone but only written by
 # one person.
 #
-# Previously the writing to files is a close approximation to this one.
 # This is a simulation using actors
 defmodule Simulation do
   def start() do
@@ -84,7 +87,7 @@ defmodule Simulation do
     |> Enum.map(fn worker -> Worker.begin(worker) end)
 
     # Run the simulation for 30 seconds
-    Process.sleep(30_000) 
+    Process.sleep(10_000) 
 
     footer()
   end
